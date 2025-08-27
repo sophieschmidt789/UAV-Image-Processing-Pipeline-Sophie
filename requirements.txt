@@ -1,0 +1,11 @@
+numpy
+pandas
+opencv-python
+scikit-image
+matplotlib
+imagecodecs
+rasterio
+ckwrap
+metashape
+PyPDF2
+openpyxl
