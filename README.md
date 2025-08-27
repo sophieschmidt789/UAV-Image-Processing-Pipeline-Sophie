@@ -41,34 +41,6 @@ pip install -r requirements.txt
 ...
 ```
 
-```
-├─ src/
-│  ├─ pipeline.py           # entrypoint orchestrating stages
-│  ├─ stages/
-│  │  ├─ preprocess.py      # e.g., resize/denoise/normalize
-│  │  ├─ segment.py         # e.g., threshold/ML/DL
-│  │  ├─ features.py        # e.g., morphology/texture/VI
-│  │  └─ visualize.py       # plots/overlays/exports
-│  ├─ utils/
-│  │  └─ io.py              # I/O helpers, logging, timing
-│  └─ __init__.py
-├─ configs/
-│  ├─ minimal.yaml          # tiny sample config for smoke test
-│  ├─ default.yaml          # baseline config
-│  └─ <experiment>.yaml     # add your custom runs
-├─ data/
-│  ├─ raw/                  # immutable source data
-│  ├─ interim/              # intermediate artifacts
-│  └─ processed/            # final outputs for analysis
-├─ outputs/                 # figs, tables, reports
-├─ notebooks/               # exploration & EDA
-├─ tests/                   # unit/integration tests
-├─ requirements.txt         # or pyproject.toml
-├─ environment.yml          # conda env (name: imgpipe)
-├─ .gitignore
-└─ README.md
-```
-
 ### rename all ortho and dem with date suffix
 ```bash
 python rename_ortho_dem.py <base_dir>
