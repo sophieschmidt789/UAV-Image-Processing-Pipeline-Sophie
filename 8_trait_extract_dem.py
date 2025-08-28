@@ -66,7 +66,7 @@ def process_image(dem_image_path, final_mask_path, date_component,
 
     # apply mask
     masked = cv2.bitwise_and(im_dem, im_dem, mask=im_mask)
-    masked[masked == 0] = np.nan
+    masked = np.where(im_mask > 0, im_dem, np.nan)
 
     vals = masked.reshape(-1)
     vals = vals[~np.isnan(vals)]
@@ -75,9 +75,9 @@ def process_image(dem_image_path, final_mask_path, date_component,
             'Date': date_component,
             'Image ID': image_id,
             'Canopy Coverage pixel': np.nan,
-            'Canopy Coverage (cm^2)': np.nan,
+            'Canopy Coverage (m^2)': np.nan,
             'Relative Average Height (Top 5%) (cm)': np.nan,
-            'Relative Volume (cm^3)': np.nan,
+            'Relative Volume (m^3)': np.nan,
         }
         if keep_absolute:
             row.update({
@@ -101,31 +101,30 @@ def process_image(dem_image_path, final_mask_path, date_component,
         px_cm2 = np.nan
         print(f"[WARN] No GSD for date {date_component} in gsd_4_all.xlsx")
     else:
-        px_cm2 = (gsd_mm * gsd_mm) / 100.0
+        px_m2 = (gsd_mm / 1000.0) ** 2  # (m/pix)^2
 
-    coverage_cm2 = coverage_px * px_cm2 if not np.isnan(px_cm2) else np.nan
+    coverage_m2 = coverage_px * px_m2
 
     # reference mulch baseline
     ref_h = _safe_get_ref_height(reference_df, image_id)
     if np.isnan(ref_h):
         print(f"[WARN] No reference mulch height for Image ID '{image_id}'")
-    rel_avg_cm = (avg_top5 - ref_h) * 100 if not np.isnan(ref_h) else np.nan
-    rel_vol_cm3 = ((volume - coverage_px * ref_h) * 100 * px_cm2
-                   if not (np.isnan(ref_h) or np.isnan(px_cm2)) else np.nan)
+    rel_avg_cm = (avg_top5 - ref_h) * 100.0 if not np.isnan(ref_h) else np.nan
+    rel_vol_m3 = ((volume - coverage_px * ref_h) * px_m2) \
+              if not (np.isnan(ref_h) or np.isnan(px_m2)) else np.nan
 
     row = {
         'Date': date_component,
         'Image ID': image_id,
         'Canopy Coverage pixel': coverage_px,
-        'Canopy Coverage (cm^2)': coverage_cm2,
+        'Canopy Coverage (m^2)': coverage_m2,
         'Relative Average Height (Top 5%) (cm)': rel_avg_cm,
-        'Relative Volume (cm^3)': rel_vol_cm3,
+        'Relative Volume (m^3)': rel_vol_m3,
     }
-    if keep_absolute:
-        row.update({
-            'Average Height (Top 5%)': avg_top5,
-            'Volume': volume,
-        })
+    row.update({
+        'Relative Average Height (Top 5%) (cm)': avg_top5,  # units = DEM units (often meters)
+        'Relative Volume (m^3)': volume,                      # sum of DEM heights over veg pixels (DEM units × pixels)
+    })
     output_dict.setdefault(date_component, []).append(row)
 
 def trait_extract_dem(input_folder, mask_subdir="masks_overlapping",
@@ -137,7 +136,10 @@ def trait_extract_dem(input_folder, mask_subdir="masks_overlapping",
     os.makedirs(output_folder, exist_ok=True)
 
     # reference (mulch baseline per image id)
-    ref_path = os.path.join(os.path.dirname(input_folder), reference_subdir, f"{folder_name}.xlsx")
+    folder_name = os.path.basename(input_folder)
+    date_component = folder_name.split("_")[0]   # e.g. "20231111" from "20231111_Swb_Cl"
+    ref_path = os.path.join(os.path.dirname(input_folder), reference_subdir, f"{date_component}.xlsx")
+
     reference_df = None
     if os.path.exists(ref_path):
         try:
