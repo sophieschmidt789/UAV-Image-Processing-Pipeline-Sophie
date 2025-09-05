@@ -36,7 +36,7 @@ def _safe_get_gsd_mm(gsd_df, date_component):
 
 # ---------- core ----------
 def process_image(dem_image_path, final_mask_path, date_component,
-                  reference_df, gsd_df, keep_absolute, output_dict):
+                  reference_df, gsd_df, output_dict):
     image_id = os.path.basename(dem_image_path)
 
     # read rasters
@@ -79,11 +79,6 @@ def process_image(dem_image_path, final_mask_path, date_component,
             'Relative Average Height (Top 5%) (cm)': np.nan,
             'Relative Volume (m^3)': np.nan,
         }
-        if keep_absolute:
-            row.update({
-                'Average Height (Top 5%)': np.nan,
-                'Volume': np.nan,
-            })
         output_dict.setdefault(date_component, []).append(row)
         return
 
@@ -98,7 +93,7 @@ def process_image(dem_image_path, final_mask_path, date_component,
     # GSD (mm/pix) → cm^2/pix
     gsd_mm = _safe_get_gsd_mm(gsd_df, date_component)
     if np.isnan(gsd_mm):
-        px_cm2 = np.nan
+        px_m2 = np.nan
         print(f"[WARN] No GSD for date {date_component} in gsd_4_all.xlsx")
     else:
         px_m2 = (gsd_mm / 1000.0) ** 2  # (m/pix)^2
@@ -121,15 +116,11 @@ def process_image(dem_image_path, final_mask_path, date_component,
         'Relative Average Height (Top 5%) (cm)': rel_avg_cm,
         'Relative Volume (m^3)': rel_vol_m3,
     }
-    row.update({
-        'Relative Average Height (Top 5%) (cm)': avg_top5,  # units = DEM units (often meters)
-        'Relative Volume (m^3)': volume,                      # sum of DEM heights over veg pixels (DEM units × pixels)
-    })
     output_dict.setdefault(date_component, []).append(row)
 
 def trait_extract_dem(input_folder, mask_subdir="masks_overlapping",
                       reference_subdir="mulch_height",
-                      gsd_file=None, keep_absolute=False):
+                      gsd_file=None):
     # paths
     folder_name = os.path.basename(input_folder)
     output_folder = os.path.join(input_folder, "dem_trait")
@@ -173,7 +164,7 @@ def trait_extract_dem(input_folder, mask_subdir="masks_overlapping",
                     mask_path = os.path.join(input_folder, mask_subdir, file)
                     date_component = os.path.basename(os.path.dirname(os.path.dirname(dem_path))).split('_')[0]
                     process_image(dem_path, mask_path, date_component,
-                                  reference_df, gsd_df, keep_absolute, output_data)
+                                  reference_df, gsd_df, output_data)
     if not found:
         print(f"[WARN] No .tif under {input_folder}\\**\\dem_by_plot")
         return
@@ -188,7 +179,7 @@ def trait_extract_dem(input_folder, mask_subdir="masks_overlapping",
 def trait_extract_dem_batch(batch_folder, folder_pattern="*AS_S2*",
                             mask_subdir="masks_overlapping",
                             reference_subdir="mulch_height",
-                            gsd_file=None, keep_absolute=False):
+                            gsd_file=None):
     patterns = _normalize_patterns(folder_pattern)
     count = 0
     for folder in os.listdir(batch_folder):
@@ -197,7 +188,7 @@ def trait_extract_dem_batch(batch_folder, folder_pattern="*AS_S2*",
             print(f"[INFO] Processing {input_folder}")
             trait_extract_dem(input_folder, mask_subdir=mask_subdir,
                               reference_subdir=reference_subdir,
-                              gsd_file=gsd_file, keep_absolute=keep_absolute)
+                              gsd_file=gsd_file)
             count += 1
     if count == 0:
         print(f"[WARN] No subfolders matched {patterns} under {batch_folder}")
@@ -215,8 +206,6 @@ if __name__ == "__main__":
                    help="Subfolder (next to date folder) containing mulch baseline Excel per date.")
     p.add_argument("--gsd-file", type=str, default=None,
                    help="Path to gsd_4_all.xlsx (default: ../metashape_report/gsd_4_all.xlsx).")
-    p.add_argument("--keep-absolute", action="store_true",
-                   help="Also keep absolute Average Height (Top 5%) and Volume columns.")
     args = p.parse_args()
 
     if args.batchpath:
@@ -224,13 +213,11 @@ if __name__ == "__main__":
                                 folder_pattern=args.folder_pattern,
                                 mask_subdir=args.mask_subdir,
                                 reference_subdir=args.reference_subdir,
-                                gsd_file=args.gsd_file,
-                                keep_absolute=args.keep_absolute)
+                                gsd_file=args.gsd_file)
     elif args.ipath:
         trait_extract_dem(args.ipath,
                           mask_subdir=args.mask_subdir,
                           reference_subdir=args.reference_subdir,
-                          gsd_file=args.gsd_file,
-                          keep_absolute=args.keep_absolute)
+                          gsd_file=args.gsd_file)
     else:
         raise SystemExit("Provide either --ipath or --batchpath")

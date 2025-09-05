@@ -312,7 +312,7 @@ python 10_merge_dem_nodem.py --batchpath <base_dir>
 ```
 <base_dir>/
 ├─ dem_trait
-├─ nondem_trait
+├─ nodem_trait
 ├─ merged_trait
 ├─ DATE1
 ├─ DATE2/
