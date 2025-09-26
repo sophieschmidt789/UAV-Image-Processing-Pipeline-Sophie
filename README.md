@@ -48,7 +48,7 @@ Generates **Agisoft Metashape** project reports and parses the **GSD (cm/px)** f
 The extracted GSD is then used as the **pixel size** when computing **canopy coverage area** and **volume**.
 
 ```bash
-python 0_call_export_report_metashape.py <base_dir>
+metashape.exe -r export_report_metashape.py --batchpath <base_dir>
 python 0_extract_from_report.py <base_dir>
 ```
 **Outputs**
