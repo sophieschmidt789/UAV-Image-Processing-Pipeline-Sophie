@@ -32,14 +32,30 @@ pip install -r requirements.txt
 ```
 <base_dir>/
 ├─ DATE1
+│  │  ├─ ortho_dem_process.psx
 │  │  ├─ ortho.tif
 │  │  └─ dem.tif
 ├─ DATE2
+│  │  ├─ ortho_dem_process.psx
 │  │  ├─ ortho.tif
 │  │  └─ dem.tif
 ├─ DATE3
 ...
 ```
+
+### Extract GSD from Metashape report
+Generates **Agisoft Metashape** project reports and parses the **GSD (cm/px)** for each orthomosaic.  
+The extracted GSD is then used as the **pixel size** when computing **canopy coverage area** and **volume**.
+
+```bash
+python 0_call_export_report_metashape.py <base_dir>
+python 0_extract_from_report.py <base_dir>
+```
+**Outputs**
+- A table mapping `DATE / scene → GSD` (e.g., `gsd_summary.csv`).
+- Per-row cached GSD values for downstream scripts.
+
+---
 
 ### rename all ortho and dem with date suffix
 ```bash
@@ -239,21 +255,7 @@ python 6_masks_overlapping_batch_mulch.py --batchpath <base_dir>
 ## Structural Trait Extraction
 > Height, canopy coverage area, and canopy volume derived from DEM and masks.
 
-### 1) Extract GSD from Metashape report
-Generates **Agisoft Metashape** project reports and parses the **GSD (cm/px)** for each orthomosaic.  
-The extracted GSD is then used as the **pixel size** when computing **canopy coverage area** and **volume**.
-
-```bash
-python 7_0_call_export_report_metashape.py <base_dir>
-python 7_0_extract_from_report.py <base_dir>
-```
-**Outputs**
-- A table mapping `DATE / scene → GSD` (e.g., `gsd_summary.csv`).
-- Per-row cached GSD values for downstream scripts.
-
----
-
-### 2) Mulch (bed) height extraction (baseline DTM)
+### 1) Mulch (bed) height extraction (baseline DTM)
 Derives a **DTM of the mulch surface** to serve as the height baseline.  
 > This is **DTM**, not DSM. Plant height is later computed as:  
 **plant_height = plant_top_5%_mean_DSM − mulch_DTM**.
@@ -271,7 +273,7 @@ python 7_mulch_height_extract.py --batchpath <base_dir> --folder-pattern "*_Swb_
 
 ---
 
-### 3) Canopy coverage and volume extraction
+### 2) Canopy coverage and volume extraction
 Computes **canopy coverage (area)** and **canopy volume** per plot using the veg masks, the DEM, and the GSD.
 
 ```bash

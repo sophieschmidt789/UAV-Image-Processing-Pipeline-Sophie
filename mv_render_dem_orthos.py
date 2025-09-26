@@ -14,24 +14,45 @@ def move_image_files(base_path: str,
     matching `folder_pattern` (recursively) into a subfolder named `dest_subfolder`
     inside each matched folder.
 
-    Returns a list of (source -> destination) strings for moved files.
+    Returns a list of "SRC -> DST" strings for moved files.
     """
     moved: List[str] = []
-    suffixes = tuple(file_suffixes)
 
-    # Find all folders matching the pattern under base_path
-    folders = glob.glob(os.path.join(base_path, folder_pattern))
+    # Make suffix matching case-insensitive
+    suffixes = tuple(s.lower() for s in file_suffixes)
+
+    # Ensure the pattern is recursive (**), and add wildcards if user passed a bare token
+    if not any(ch in folder_pattern for ch in "*?["):
+        folder_pattern = f"*{folder_pattern}*"
+    pattern = os.path.join(os.path.abspath(base_path), "**", folder_pattern)
+
+    # Find all matching folders (recursive)
+    folders = [p for p in glob.glob(pattern, recursive=True) if os.path.isdir(p)]
+
     for folder in folders:
+        dest_dir = os.path.join(folder, dest_subfolder)
         for root, _, files in os.walk(folder):
+            # Skip scanning the destination folder itself
+            if os.path.abspath(root).startswith(os.path.abspath(dest_dir) + os.sep):
+                continue
+
             for file in files:
-                if file.endswith(suffixes):  # case-sensitive; use .lower() if needed
-                    src = os.path.join(root, file)
-                    dest_dir = os.path.join(folder, dest_subfolder)
-                    dst = os.path.join(dest_dir, file)
-                    if not dry_run:
-                        os.makedirs(dest_dir, exist_ok=True)
-                        shutil.move(src, dst)
+                if not file.lower().endswith(suffixes):
+                    continue
+
+                src = os.path.join(root, file)
+                dst = os.path.join(dest_dir, file)
+
+                if dry_run:
                     moved.append(f"{src} -> {dst}")
+                    continue
+
+                os.makedirs(dest_dir, exist_ok=True)
+                if os.path.exists(dst):
+                    os.remove(dst)  # overwrite
+                shutil.move(src, dst)
+                moved.append(f"{src} -> {dst}")
+
     return moved
 
 def main():
