@@ -17,6 +17,7 @@ git clone <REPO_URL_HTTPS>
 
 cd <REPO_NAME>
 ```
+![clone](screenshot/0.PNG)
 
 ## Installation
 **Pip**
@@ -24,7 +25,7 @@ cd <REPO_NAME>
 pip install -r requirements.txt
 ```
 
-![Demo](https://github.com/chilichilio/UAV-Image-Processing-Pipeline/demo/0.gif)
+![clone_2](screenshot/0_2.PNG)
 
 ---
 
@@ -53,6 +54,9 @@ The extracted GSD is then used as the **pixel size** when computing **canopy cov
 metashape.exe -r 0_export_report_metashape.py --batchpath <base_dir>
 python 0_extract_from_report.py <base_dir>
 ```
+
+![gsd](screenshot/1.PNG)
+
 **Outputs**
 - A table mapping `DATE / scene → GSD` (e.g., `gsd_summary.csv`).
 - Per-row cached GSD values for downstream scripts.
@@ -64,6 +68,8 @@ python 0_extract_from_report.py <base_dir>
 python rename_ortho_dem.py <base_dir>
 ```
 
+![rename](screenshot/2.PNG)
+
 ### put all render, dem, ortho into folder orthos
 ```yaml
 folder-pattern: all subfolders end with "_Swb_Cl"
@@ -72,6 +78,8 @@ folder-pattern: all subfolders end with "_Swb_Cl"
 ```bash
 python mv_render_dem_orthos.py <base_dir> --folder-pattern "*_Swb_Cl*" --suffixes dem.tif ortho.tif --dest orthos
 ```
+
+![put_in_orthos](screenshot/3.PNG)
 
 ---
 
@@ -118,6 +126,8 @@ python 1_call_rasterRenderRGB.py <base_dir> --folder-pattern "*_Swb_Cl*"
 python 2_call_multiOmRasterCalculation4.py <base_dir> --folder-pattern "*_Swb_Cl*"
 python 3_call_cropFromOrthomosaic2.py <base_dir> --folder-pattern "*_Swb_Cl*" --shp <path_to_roi_shapefile>
 ```
+
+![raster_cal](screenshot/4.PNG)
 
 ---
 ### updated structure (after raster calculation & per-ROI cropping)
@@ -190,6 +200,9 @@ python 4_generate_mask_on_1orbatch.py "/data/dem_by_plot" "/data/masks/dem_mask"
 python 4_generate_mask_on_1orbatch.py --batchpath <base_dir> --vi-subdir OSAVI_by_plot --vi-lt 0.6
 ```
 
+![mask_on_spectral_dem](screenshot/5.PNG)
+![mask_generated](screenshot/6.PNG)
+
 ---
 
 ### 2) Vegetation mask smoothing (refinement)
@@ -201,6 +214,8 @@ This step merges and cleans overlapping veg masks across dates to reduce noise a
 python 5_masks_overlapping_batch_veg.py --batchpath <base_dir>
 ```
 
+![mask_overlap](screenshot/7.PNG)
+
 ---
 
 ### 3) Mulch/background masks
@@ -210,6 +225,8 @@ These are useful for explicitly separating canopy from bed during trait extracti
 ```bash
 python 6_masks_overlapping_batch_mulch.py --batchpath <base_dir>
 ```
+
+![mulch_mask](screenshot/8.PNG)
 
 ---
 
@@ -265,6 +282,9 @@ Derives a **DTM of the mulch surface** to serve as the height baseline.
 ```bash
 python 7_mulch_height_extract.py --batchpath <base_dir> --folder-pattern "*_Swb_Cl*"
 ```
+
+![mulch_mask](screenshot/10.PNG)
+
 **What it does**
 - Uses mulch/background masks to model the **mulch surface** per plot.
 - Fits/smooths a surface to estimate the **baseline elevation** (DTM) for each plot.
@@ -281,6 +301,9 @@ Computes **canopy coverage (area)** and **canopy volume** per plot using the veg
 ```bash
 python 8_trait_extract_dem.py --batchpath <base_dir> --folder-pattern "*_Swb_Cl*"
 ```
+
+![mulch_mask](screenshot/11.PNG)
+
 **What it does**
 - **Coverage (area):** counts vegetation‑mask pixels × `pixel_area (from GSD)`.
 - **Height:** estimates **plant height = DSM − mulch_DTM** within veg mask.
@@ -298,6 +321,9 @@ Reported values include **mean** and **standard deviation** (and can be extended
 ```bash
 python 9_trait_extract_spectral.py --batchpath <base_dir> --folder-pattern "*_Swb_Cl*"
 ```
+
+![mulch_mask](screenshot/12.PNG)
+
 **Outputs**
 - Per‑plot/plant mean & stddev for selected spectral layers (e.g., bands, NDVI/OSAVI, etc.).
 
@@ -309,8 +335,13 @@ Joins the structural (coverage/height/volume) and spectral summaries into one ta
 ```bash
 python 10_merge_dem_nodem.py --batchpath <base_dir>
 ```
+
+![mulch_mask](screenshot/13.PNG)
+
 **Outputs**
 - A merged CSV keyed by `date / plotid` (and other IDs you provide), ready for modeling and visualization.
+
+![mulch_mask](screenshot/14.PNG)
 
 ### updated structure (after raster calculation & per-ROI cropping)
 ```
