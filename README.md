@@ -24,6 +24,8 @@ cd <REPO_NAME>
 pip install -r requirements.txt
 ```
 
+![Demo](https://github.com/chilichilio/UAV-Image-Processing-Pipeline/demo/0.gif)
+
 ---
 
 ## Usage
