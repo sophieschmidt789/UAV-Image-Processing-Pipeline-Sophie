@@ -23,6 +23,9 @@ cd <REPO_NAME>
 **Pip**
 ```bash
 pip install -r requirements.txt
+
+#because I downloaded all the wheels onto my user and upgraded to python 3.11 instead of py 3.7
+D:\UAV-Image-Processing-Pipeline-Sophie>py -3.11 -m pip install --user -r requirements.txt
 ```
 
 ![clone_2](screenshot/0_2.png)
