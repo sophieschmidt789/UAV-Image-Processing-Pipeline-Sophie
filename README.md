@@ -82,10 +82,13 @@ python rename_ortho_dem.py <base_dir>
 ### put all render, dem, ortho into folder orthos
 ```yaml
 folder-pattern: all subfolders end with "_Swb_Cl"
+#instead ends with "_20m_"
 ```
 
 ```bash
-python mv_render_dem_orthos.py <base_dir> --folder-pattern "*_Swb_Cl*" --suffixes dem.tif ortho.tif --dest orthos
+#python mv_render_dem_orthos.py <base_dir> --folder-pattern "*_Swb_Cl*" --suffixes dem.tif ortho.tif --dest orthos
+###instead
+python mv_render_dem_orthos.py D:\test --folder-pattern "*_20m_*" --suffixes dem.tif ortho.tif --dest orthos
 ```
 
 ![put_in_orthos](screenshot/3.png)
