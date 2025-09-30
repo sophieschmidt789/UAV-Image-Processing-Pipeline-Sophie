@@ -36,6 +36,7 @@ D:\UAV-Image-Processing-Pipeline-Sophie>py -3.11 -m pip install --user -r requir
 
 ### original structure
 ```
+#our base dir is "D:\2024-25_DroneImages\Neo\"
 <base_dir>/
 ├─ DATE1
 │  │  ├─ ortho_dem_process.psx
