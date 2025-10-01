@@ -1,10 +1,9 @@
 import os
-import sys
 import subprocess
 import argparse
 
 def main(base_dir: str, folder_pattern: str, subdir: str, shp_path: str):
-    qgis_python = r'"C:\Program Files\QGIS 3.44.3\bin\python-qgis.bat"'
+    qgis_python = r"C:\Program Files\QGIS 3.44.3\bin\python-qgis.bat"
 
     if not os.path.isdir(base_dir):
         raise FileNotFoundError(f"Base directory not found: {base_dir}")
@@ -13,7 +12,7 @@ def main(base_dir: str, folder_pattern: str, subdir: str, shp_path: str):
 
     for folder_name in os.listdir(base_dir):
         folder_path = os.path.join(base_dir, folder_name)
-        if not (os.path.isdir(folder_path) and folder_name.endswith(folder_pattern)):
+        if not (os.path.isdir(folder_path) and folder_pattern in folder_name):
             continue
 
         raster_folder = os.path.join(folder_path, subdir)
@@ -22,28 +21,29 @@ def main(base_dir: str, folder_pattern: str, subdir: str, shp_path: str):
             continue
 
         cmd = [
-            qgis_python, "sophie_3_cropFromOrthomosaic2.py",
+            qgis_python,
+            os.path.join(os.getcwd(), "sophie_3_cropFromOrthomosaic2.py"),
             "-sgt", raster_folder,
             "-shp", shp_path,
-            "-tpath", folder_path,
+            "-tpath", folder_path
         ]
+
         try:
-            subprocess.run(" ".join(cmd), check=True, shell=True)
+            # Pass the list directly; let Python handle quoting
+            subprocess.run(cmd, check=True, shell=False)
         except subprocess.CalledProcessError as e:
             print(f"[error] {e} for folder: {folder_path}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Call sophie_3_cropFromOrthomosaic2.py for subfolders matching a suffix."
+        description="Call sophie_3_cropFromOrthomosaic2.py for subfolders matching a pattern."
     )
-    parser.add_argument("base_dir", type=str,
-                        help="Path to the base directory containing target folders.")
-    parser.add_argument("--folder-pattern", type=str, default="_Swb_Cl",
-                        help="Folder name ending to match (default: '_Swb_Cl').")
+    parser.add_argument("base_dir", type=str, help="Base directory containing target folders.")
+    parser.add_argument("--folder-pattern", type=str, default="_20m_",
+                        help="Substring to match folder names (default: '_20m_').")
     parser.add_argument("--subdir", type=str, default="orthos",
                         help="Subfolder containing orthomosaics (default: 'orthos').")
-    parser.add_argument("--shp", type=str, required=True,
-                        help="Path to the shapefile to use with -shp.")
+    parser.add_argument("--shp", type=str, required=True, help="Path to shapefile.")
 
     args = parser.parse_args()
     main(args.base_dir, args.folder_pattern, args.subdir, args.shp)
