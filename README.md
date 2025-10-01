@@ -250,7 +250,9 @@ Generates masks for the **mulch/bedding** (non-vegetation background).
 These are useful for explicitly separating canopy from bed during trait extraction and visualization.
 
 ```bash
-python 6_masks_overlapping_batch_mulch.py --batchpath <base_dir>
+#python 6_masks_overlapping_batch_mulch.py --batchpath <base_dir>
+#use this path instead
+"C:\Program Files\QGIS 3.44.3\bin\python-qgis.bat" 6_masks_overlapping_batch_mulch.py --batchpath D:\test
 ```
 
 ![mulch_mask](screenshot/8.png)
