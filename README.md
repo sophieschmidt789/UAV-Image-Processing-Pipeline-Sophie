@@ -136,13 +136,13 @@ Use a polygon (or circle) layer that outlines **one plot/plant per feature**—a
 # pyqgis
 #python 1_call_rasterRenderRGB.py <base_dir> --folder-pattern "*_Swb_Cl*"
 #insteadd
-python 1_call_rasterRenderRGB.py D:\test --folder-pattern "*_20m_*"
+python sophie_1_call_rasterRenderRGB.py D:\test --folder-pattern "_20m_"
 
 #python 2_call_multiOmRasterCalculation4.py <base_dir> --folder-pattern "*_Swb_Cl*"
-python 2_call_multiOmRasterCalculation4.py D:\test --folder-pattern "*_20m_*"
+python 2_call_multiOmRasterCalculation4.py D:\test --folder-pattern "_20m_"
 
 #python 3_call_cropFromOrthomosaic2.py <base_dir> --folder-pattern "*_Swb_Cl*" --shp <path_to_roi_shapefile>
-python 3_call_cropFromOrthomosaic2.py D:test\ --folder-pattern "*_20m_*" --shp <path_to_roi_shapefile>
+python 3_call_cropFromOrthomosaic2.py D:test\ --folder-pattern "_20m_" --shp <path_to_roi_shapefile>
 ```
 
 ![raster_cal](screenshot/4.png)
