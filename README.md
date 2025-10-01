@@ -191,7 +191,8 @@ This step simply brightens them **for visualization purposes only**. It does not
 ### Commands
 ```bash
 # Batch mode: apply default brightness adjustment to all matching folders
-python adjust_bright.py --batchpath <base_dir> --endswith "*_Swb_Cl*"
+#python adjust_bright.py --batchpath <base_dir> --endswith "*_Swb_Cl*"
+"C:\Program Files\QGIS 3.44.3\bin\python-qgis.bat" adjust_bright.py --batchpath D:\test --endswith "_20m_"
 
 # Single folder: apply a lighter adjustment
 python adjust_bright.py --ipath <base_dir> --alpha 2.2 --beta 10
