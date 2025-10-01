@@ -4,7 +4,7 @@ import subprocess
 import argparse
 
 def main(base_dir: str, folder_pattern: str, subdir: str, shp_path: str):
-    qgis_python = r"C:\Program Files\QGIS 3.44.3\bin\python-qgis.bat"
+    qgis_python = r'"C:\Program Files\QGIS 3.44.3\bin\python-qgis.bat"'
 
     if not os.path.isdir(base_dir):
         raise FileNotFoundError(f"Base directory not found: {base_dir}")
