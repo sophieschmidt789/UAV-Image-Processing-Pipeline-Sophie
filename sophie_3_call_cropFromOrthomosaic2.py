@@ -22,7 +22,7 @@ def main(base_dir: str, folder_pattern: str, subdir: str, shp_path: str):
             continue
 
         cmd = [
-            qgis_python, "3_cropFromOrthomosaic2.py",
+            qgis_python, "sophie_3_cropFromOrthomosaic2.py",
             "-sgt", raster_folder,
             "-shp", shp_path,
             "-tpath", folder_path,
@@ -34,7 +34,7 @@ def main(base_dir: str, folder_pattern: str, subdir: str, shp_path: str):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Call 3_cropFromOrthomosaic2.py for subfolders matching a suffix."
+        description="Call sophie_3_cropFromOrthomosaic2.py for subfolders matching a suffix."
     )
     parser.add_argument("base_dir", type=str,
                         help="Path to the base directory containing target folders.")
