@@ -4,6 +4,8 @@ import subprocess
 import argparse
 
 def main(base_dir: str, folder_pattern: str, subdir: str, shp_path: str):
+    qgis_python = r'"C:\Program Files\QGIS 3.44.3\bin\python-qgis.bat"'
+
     if not os.path.isdir(base_dir):
         raise FileNotFoundError(f"Base directory not found: {base_dir}")
     if not os.path.isfile(shp_path):
@@ -20,13 +22,13 @@ def main(base_dir: str, folder_pattern: str, subdir: str, shp_path: str):
             continue
 
         cmd = [
-            sys.executable, "3_cropFromOrthomosaic2.py",
+            qgis_python, "3_cropFromOrthomosaic2.py",
             "-sgt", raster_folder,
             "-shp", shp_path,
             "-tpath", folder_path,
         ]
         try:
-            subprocess.run(cmd, check=True)
+            subprocess.run(" ".join(cmd), check=True, shell=True)
         except subprocess.CalledProcessError as e:
             print(f"[error] {e} for folder: {folder_path}")
 
