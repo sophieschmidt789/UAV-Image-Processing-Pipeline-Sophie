@@ -145,6 +145,8 @@ python sophie_2_call_multiOmRasterCalculation4.py D:\test --folder-pattern "_20m
 #python 3_call_cropFromOrthomosaic2.py <base_dir> --folder-pattern "*_Swb_Cl*" --shp <path_to_roi_shapefile>
 #"D:\test\20241118_VW_Neo_20m_\neo_2024_wholeplotcirles_shp.shp"
 python sophie_3_call_cropFromOrthomosaic2.py D:\test --folder-pattern "_20m_" --shp D:\test\20241118_VW_Neo_20m_\neo_2024_wholeplotcirles_shp.shp
+#to subset just one bed to check if things are working: becasuse I think I assembled the main shp file wrong as it was still treating the individual beds as thier own object (ex. R1B11 and R2B3 were showing up in the Dem folder)
+python sophie_3_call_cropFromOrthomosaic2.py D:\test --folder-pattern "_20m_" --shp D:\test\20241118_VW_Neo_20m_\R1B1_shp.shp
 ```
 
 ![raster_cal](screenshot/4.png)
