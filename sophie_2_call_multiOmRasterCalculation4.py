@@ -19,7 +19,7 @@ def main(base_dir: str, folder_pattern: str, subdir: str):
             continue
 
         # Call worker script with QGIS python
-        cmd = [qgis_python, "2_multiOmRasterCalculation4.py", "-s", orthos_path]
+        cmd = [qgis_python, "sophie_2_multiOmRasterCalculation4.py", "-s", orthos_path]
         try:
             subprocess.run(cmd, check=True, shell=True)
         except subprocess.CalledProcessError as e:
