@@ -54,7 +54,7 @@ for im in imList:
     imFileName = str(im)
 
     # update on May 30 2024
-    TYyatsaviTiff = imFileName.replace(".tif","_ATSAVI.tif")
+    atsaviTiff = imFileName.replace(".tif","_ATSAVI.tif")
     ari2Tiff = imFileName.replace(".tif","_ARI2.tif")
     arvi2Tiff = imFileName.replace(".tif","_ARVI2.tif")
     blueTiff = imFileName.replace(".tif","_B.tif")
