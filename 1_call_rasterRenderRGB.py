@@ -12,7 +12,7 @@ def main(base_dir: str, folder_pattern: str, suffix: str):
                 ortho_files = [f for f in os.listdir(orthos_folder) if f.endswith(suffix)]
                 if ortho_files:
                     ortho_file_path = os.path.join(orthos_folder, ortho_files[0])
-                    command = f"python3 1_rasterRenderRGB.py -s \"{ortho_file_path}\""
+                    command = f"python 1_rasterRenderRGB.py -s \"{ortho_file_path}\""
                     subprocess.run(command, shell=True)
 
 if __name__ == "__main__":
