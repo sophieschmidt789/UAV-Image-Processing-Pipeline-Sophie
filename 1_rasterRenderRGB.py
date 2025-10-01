@@ -81,7 +81,7 @@ pipe.set(provider.clone())
 pipe.set(renderer.clone())
 
 file_writer = QgsRasterFileWriter(str(sourceRaster).replace(".tif","_rgb_render.tif"))
-file_writer.writeRaster(pipe, width, height, provider.extent(), crs)
+file_writer.writeRaster(pipe, width, height, provider.extent(), crs, QgsCoordinateTransformContext())
 
 
 qgs.exitQgis()
