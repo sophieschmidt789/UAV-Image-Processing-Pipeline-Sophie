@@ -3,6 +3,12 @@ import subprocess
 import argparse
 
 def main(base_dir: str, folder_pattern: str, suffix: str):
+    # Path to QGIS Python launcher
+    qgis_python = r"C:\Program Files\QGIS 3.44.3\bin\python-qgis.bat"
+    
+    # Full path to raster render script
+    script_path = os.path.join(os.path.dirname(__file__), "1_rasterRenderRGB.py")
+
     # Iterate over folders
     for folder_name in os.listdir(base_dir):
         folder_path = os.path.join(base_dir, folder_name)
@@ -12,7 +18,10 @@ def main(base_dir: str, folder_pattern: str, suffix: str):
                 ortho_files = [f for f in os.listdir(orthos_folder) if f.endswith(suffix)]
                 if ortho_files:
                     ortho_file_path = os.path.join(orthos_folder, ortho_files[0])
-                    command = f"\"C:/OSGeo4W64/bin/python-qgis.bat\" 1_rasterRenderRGB.py -s \"{ortho_file_path}\""
+                    
+                    # Build command using QGIS Python
+                    command = f"\"{qgis_python}\" \"{script_path}\" -s \"{ortho_file_path}\""
+                    print("Running:", command)  # Debug print
                     subprocess.run(command, shell=True)
 
 if __name__ == "__main__":
