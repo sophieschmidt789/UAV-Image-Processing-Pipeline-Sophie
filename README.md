@@ -139,11 +139,12 @@ Use a polygon (or circle) layer that outlines **one plot/plant per feature**—a
 python sophie_1_callrasterRenderRGB.py D:\test --folder-pattern "_20m_"
 
 #python 2_call_multiOmRasterCalculation4.py <base_dir> --folder-pattern "*_Swb_Cl*"
-python 2_call_multiOmRasterCalculation4.py D:\test --folder-pattern "_20m_"
+#ran first time just to make up until GLI veg indice - takes a while, can edit to determine which ones we want eventually
+python sophie_2_call_multiOmRasterCalculation4.py D:\test --folder-pattern "_20m_"
 
 #python 3_call_cropFromOrthomosaic2.py <base_dir> --folder-pattern "*_Swb_Cl*" --shp <path_to_roi_shapefile>
 #"D:\test\20241118_VW_Neo_20m_\neo_2024_wholeplotcirles_shp.shp"
-python 3_call_cropFromOrthomosaic2.py D:test\ --folder-pattern "_20m_" --shp D:\test\20241118_VW_Neo_20m_\neo_2024_wholeplotcirles_shp.shp
+python sophie_3_call_cropFromOrthomosaic2.py D:\test --folder-pattern "_20m_" --shp D:\test\20241118_VW_Neo_20m_\neo_2024_wholeplotcirles_shp.shp
 ```
 
 ![raster_cal](screenshot/4.png)
