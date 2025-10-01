@@ -214,13 +214,15 @@ The script thresholds a VI (and/or DEM) to produce a **binary vegetation mask** 
 
 ```bash
 # Single OSAVI folder → veg mask (example threshold)
-python 4_generate_mask_on_1orbatch.py "/data/OSAVI_by_plot" "/data/masks/OSAVI_mask" --lt 0.6
+#python 4_generate_mask_on_1orbatch.py "/data/OSAVI_by_plot" "/data/masks/OSAVI_mask" --lt 0.6
 
 # Single DEM folder → veg mask (height-based, if desired)
 python 4_generate_mask_on_1orbatch.py "/data/dem_by_plot" "/data/masks/dem_mask"
 
 # Batch: use OSAVI across date folders (swap OSAVI_by_plot for NDVI_by_plot, HSV_by_plot, etc.)
-python 4_generate_mask_on_1orbatch.py --batchpath <base_dir> --vi-subdir OSAVI_by_plot --vi-lt 0.6
+#python 4_generate_mask_on_1orbatch.py --batchpath <base_dir> --vi-subdir OSAVI_by_plot --vi-lt 0.6
+#batch for just NDVI_by_plot folders:
+"C:\Program Files\QGIS 3.44.3\bin\python-qgis.bat" sophie_4_generate_mask_on_1orbatch.py --batchpath D:\test --vi-subdir NDVI_by_plot --vi-lt 0.6
 ```
 
 ![mask_on_spectral_dem](screenshot/5.png)
