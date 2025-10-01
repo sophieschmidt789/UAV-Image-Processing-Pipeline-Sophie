@@ -236,7 +236,9 @@ This step merges and cleans overlapping veg masks across dates to reduce noise a
 > **Note:** The DEM-assisted refinement in this stage is to be updated.
 
 ```bash
-python 5_masks_overlapping_batch_veg.py --batchpath <base_dir>
+#python 5_masks_overlapping_batch_veg.py --batchpath <base_dir>
+#my version instead
+"C:\Program Files\QGIS 3.44.3\bin\python-qgis.bat" 5_masks_overlapping_batch_veg.py --batchpath D:\test
 ```
 
 ![mask_overlap](screenshot/7.png)
