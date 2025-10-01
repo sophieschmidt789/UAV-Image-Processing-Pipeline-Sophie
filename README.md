@@ -153,6 +153,7 @@ python sophie_3_call_cropFromOrthomosaic2.py D:\test --folder-pattern "_20m_" --
 
 ---
 ### updated structure (after raster calculation & per-ROI cropping)
+#I think instead of rgb_by_plot i am getting render_by_plot
 ```
 <base_dir>/
 ├─ DATE1/
