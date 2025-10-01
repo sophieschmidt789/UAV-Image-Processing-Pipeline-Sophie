@@ -1,4 +1,4 @@
-# python3 3_cropFromOrthomosaic2.py -sgt F:\2023_Swb_Cl_maps\20240509_test\20240214_Swb_Cl\orthos -shp F:\2023_Swb_Cl_maps\20240509_test\shapefiles\20231122_Swb_RGB_Clonal_Circles.shp -tpath F:\2023_Swb_Cl_maps\20240509_test\20240214_Swb_Cl
+i# python3 3_cropFromOrthomosaic2.py -sgt F:\2023_Swb_Cl_maps\20240509_test\20240214_Swb_Cl\orthos -shp F:\2023_Swb_Cl_maps\20240509_test\shapefiles\20231122_Swb_RGB_Clonal_Circles.shp -tpath F:\2023_Swb_Cl_maps\20240509_test\20240214_Swb_Cl
 '''
 Created on Jan 8, 2019
 
