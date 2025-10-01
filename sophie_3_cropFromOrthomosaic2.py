@@ -38,4 +38,8 @@ def crop_from_orthomosaic(src_geoTiff, shape_file, target_path):
             os.makedirs(target_folder)
 
         # Write masked raster
-        out_file = os.path.join(target_folder, plotIDUpdated +
+        out_file = os.path.join(target_folder, plotIDUpdated + ".tif")
+        with rasterio.open(out_file, "w", **out_meta) as dest:
+            dest.write(out_image)
+
+        print(f"[ok] Wrote {out_file}")
