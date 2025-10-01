@@ -10,7 +10,6 @@ except Exception:
     _HAS_CV2 = False
 
 def _write_mask_like(src, mask_array, out_path, nodata_val=0):
-    qgis_python = r'"C:\Program Files\QGIS 3.44.3\bin\python-qgis.bat"'
     profile = src.profile.copy()
     profile.update({
         "count": 1,
