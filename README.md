@@ -5,6 +5,8 @@
 > Replace any `<PLACEHOLDER>` with your project specifics as you iterate.
 
 ---
+##Fix git path
+set PATH=C:\Users\s.schmidt1\AppData\Local\Programs\Git\bin;C:\Users\s.schmidt1\AppData\Local\Programs\Git\cmd;%PATH%
 
 ## Quickstart
 Follow these steps in order.
