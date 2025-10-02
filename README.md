@@ -331,7 +331,9 @@ Derives a **DTM of the mulch surface** to serve as the height baseline.
 Computes **canopy coverage (area)** and **canopy volume** per plot using the veg masks, the DEM, and the GSD.
 
 ```bash
-python 8_trait_extract_dem.py --batchpath <base_dir> --folder-pattern "*_Swb_Cl*"
+#python 8_trait_extract_dem.py --batchpath <base_dir> --folder-pattern "*_Swb_Cl*"
+#instead
+"C:\Program Files\QGIS 3.44.3\bin\python-qgis.bat" 8_trait_extract_dem.py --batchpath D:\test --folder-pattern "_20m_"
 ```
 
 ![mulch_mask](screenshot/11.png)
