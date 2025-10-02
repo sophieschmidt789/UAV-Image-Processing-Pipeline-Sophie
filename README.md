@@ -310,7 +310,9 @@ Derives a **DTM of the mulch surface** to serve as the height baseline.
 **plant_height = plant_top_5%_mean_DSM − mulch_DTM**.
 
 ```bash
-python 7_mulch_height_extract.py --batchpath <base_dir> --folder-pattern "*_Swb_Cl*"
+#python 7_mulch_height_extract.py --batchpath <base_dir> --folder-pattern "*_Swb_Cl*"
+#instead:
+"C:\Program Files\QGIS 3.44.3\bin\python-qgis.bat" 7_mulch_height_extract.py --batchpath D:\test --folder-pattern "_20m_"
 ```
 
 ![mulch_mask](screenshot/10.png)
