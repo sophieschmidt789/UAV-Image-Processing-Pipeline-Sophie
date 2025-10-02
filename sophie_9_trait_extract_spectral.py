@@ -124,4 +124,4 @@ if __name__ == "__main__":
     elif args.ipath:
         trait_extract_nodem(args.ipath, mask_subdir=args.mask_subdir)
     else:
-        raise SystemExit("Provide either --ipath or --batchpath"
+        raise SystemExit("Provide either --ipath or --batchpath")
