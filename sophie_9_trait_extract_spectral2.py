@@ -35,6 +35,7 @@ def _process_one(nodem_path, mask_path, index_prefix, rows):
     except Exception as e:
         print(f"[WARN] read nodem failed: {nodem_path} ({e})")
         return
+
     mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
     if mask is None:
         print(f"[WARN] missing mask: {mask_path}")
@@ -42,18 +43,14 @@ def _process_one(nodem_path, mask_path, index_prefix, rows):
 
     gray = _to_gray_float(nodem)
 
-  # align shapes by cropping
-  h = min(gray.shape[0], mask.shape[0])
-  w = min(gray.shape[1], mask.shape[1])
-  gray = gray[:h, :w]
-  mask = mask[:h, :w]
+    # align shapes by cropping
+    h = min(gray.shape[0], mask.shape[0])
+    w = min(gray.shape[1], mask.shape[1])
+    gray = gray[:h, :w]
+    mask = mask[:h, :w]
 
-  # filter nodata (huge negative/positive values)
-  gray = np.where((gray < -1e10) | (gray > 1e10), np.nan, gray)
-
-# simple mask apply
-  vals = np.where(mask > 0, gray, np.nan).ravel()
-  vals = vals[~np.isnan(vals)]
+    # filter nodata (huge negative/positive values)
+    gray = np.where((gray < -1e10) | (gray > 1e10), np.nan, gray)
 
     # simple mask apply
     vals = np.where(mask > 0, gray, np.nan).ravel()
@@ -128,4 +125,4 @@ if __name__ == "__main__":
     elif args.ipath:
         trait_extract_nodem(args.ipath, mask_subdir=args.mask_subdir)
     else:
-        raise SystemExit("Provide either --ipath or --batchpath"
+        raise SystemExit("Provide either --ipath or --batchpath")
