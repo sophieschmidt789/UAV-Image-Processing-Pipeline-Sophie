@@ -76,7 +76,9 @@ The extracted GSD is then used as the **pixel size** when computing **canopy cov
 
 ### rename all ortho and dem with date suffix
 ```bash
-python rename_ortho_dem.py <base_dir>
+#python rename_ortho_dem.py <base_dir>
+#instead:
+py -3.11 rename_ortho_dem.py D:\test
 ```
 
 ![rename](screenshot/2.png)
