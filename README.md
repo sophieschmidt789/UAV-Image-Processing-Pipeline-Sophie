@@ -359,7 +359,7 @@ Reported values include **mean** and **standard deviation** (and can be extended
 ```bash
 python 9_trait_extract_spectral.py --batchpath <base_dir> --folder-pattern "*_Swb_Cl*"
 #Instead
-python 9_trait_extract_spectral.py --batchpath D:\test --folder-pattern "*_20m_*"
+#python sophie_9_trait_extract_spectral2.py --batchpath D:\test --folder-pattern "*_20m_*"
 ```
 
 ![mulch_mask](screenshot/12.png)
