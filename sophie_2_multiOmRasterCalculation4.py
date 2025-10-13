@@ -217,10 +217,10 @@ for im in imList:
    # genATSAVI.processCalculation()
     
     # Generate OSAVI Tiff
-  #  genOSAVI = QgsRasterCalculator(
-  #      '( ' + nirBand.ref + ' - ' + redBand.ref + ' ) / ( ' + nirBand.ref + ' + ' + redBand.ref + ' + 0.16 ) * ( 1 + 0.16 )',
-  #      osaviTiff, 'GTiff', orthoTiffLayer.extent(), orthoTiffLayer.width(), orthoTiffLayer.height(), entries)
-  #  genOSAVI.processCalculation()
+    genOSAVI = QgsRasterCalculator(
+        '( ' + nirBand.ref + ' - ' + redBand.ref + ' ) / ( ' + nirBand.ref + ' + ' + redBand.ref + ' + 0.16 ) * ( 1 + 0.16 )',
+        osaviTiff, 'GTiff', orthoTiffLayer.extent(), orthoTiffLayer.width(), orthoTiffLayer.height(), entries)
+    genOSAVI.processCalculation()
 
     # Generate GDVI Tiff (Generalized Difference Vegetation Index )
 #    genGDVI = QgsRasterCalculator('( ' + nirBand.ref + ' - ' + greenBand.ref + ' )',    
