@@ -2,11 +2,12 @@
 """
 sophieCHAT_4_generate_mask_on_1orbatch.py
 
-Full mask‑generation script that:
- • Generates DEM masks (ck‑means clustering)
- • Generates VI masks (static or adaptive thresholds, optional dead‑tissue band)
- • Removes background with per‑plot NIR data (re‑projected to match the VI tile)
- • Saves masks into <DATE>/masks/chat{VI}_mask/
+Generate binary masks from a VI or DEM.
+
+* Updated NIR handling – the per‑plot NIR file is now
+  re‑projected to the exact size/transform/CRS of the VI tile.
+* Keeps all other options (adaptive threshold, dead‑tissue band,
+  morphology, mask‑folder naming, etc.) unchanged.
 """
 
 import argparse
@@ -19,7 +20,7 @@ from rasterio.warp import reproject, Resampling
 import ckwrap  # ckmeans clustering for DEM masks
 
 try:
-    import cv2  # for optional morphology
+    import cv2  # optional morphology
     _HAS_CV2 = True
 except Exception:
     _HAS_CV2 = False
@@ -27,7 +28,7 @@ except Exception:
 
 # ----------------------------------------------------------------------
 def _write_mask_like(src, mask_array, out_path, nodata_val=0):
-    """Write a uint8 1‑band mask with the same profile as the source."""
+    """Write a 1‑band uint8 mask that keeps the source profile."""
     profile = src.profile.copy()
     profile.update(count=1, dtype="uint8", nodata=nodata_val, compress="LZW")
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
@@ -109,6 +110,7 @@ def generate_masks_vi(
 ):
     """Generate plant masks from a single VI band."""
     os.makedirs(mask_folder, exist_ok=True)
+
     kernel = None
     if _HAS_CV2 and morph_close and morph_close > 1:
         kernel = np.ones((morph_close, morph_close), np.uint8)
@@ -121,7 +123,7 @@ def generate_masks_vi(
 
         try:
             with rasterio.open(src_fp) as src:
-                # ---- VI band ----
+                # ---- VI band -------------------------------------------------
                 band = src.read(band_index, masked=True)
 
                 # ---- 1) Build background mask via per‑plot NIR (re‑projected) ----
@@ -129,35 +131,41 @@ def generate_masks_vi(
                 if nir_folder:
                     nir_fp = os.path.join(nir_folder, fn)
                     if os.path.exists(nir_fp):
-                        # read NIR (might be huge/full‑size)
                         with rasterio.open(nir_fp) as nir_src:
-                            nir_src_arr = nir_src.read(1, masked=True)
-                            # re‑project NIR to match the VI tile
-                            nir_resized = np.zeros(band.shape, dtype=nir_src_arr.dtype)
-                            reproject(
-                                source=nir_src_arr,
-                                destination=nir_resized,
-                                src_transform=nir_src.transform,
-                                src_crs=nir_src.crs,
-                                dst_transform=src.transform,
-                                dst_crs=src.crs,
-                                resampling=Resampling.nearest,
-                                src_nodata=nir_src.nodata,
-                                dst_nodata=nir_src.nodata,
-                            )
-                            nir_nd = np.ma.masked_where(
-                                nir_resized == nir_src.nodata, nir_resized
-                            )
-                            thr = np.percentile(nir_nd.compressed(), nir_bg_factor)
-                            bg_mask = ~nir_nd.mask & (nir_nd <= thr)
+                            nir_arr = nir_src.read(1, masked=True)
+                            # re‑project only if shapes differ
+                            if nir_arr.shape != band.shape:
+                                nir_resized = np.zeros(band.shape, dtype=nir_arr.dtype)
+                                reproject(
+                                    source=nir_arr,
+                                    destination=nir_resized,
+                                    src_transform=nir_src.transform,
+                                    src_crs=nir_src.crs,
+                                    dst_transform=src.transform,
+                                    dst_crs=src.crs,
+                                    resampling=Resampling.nearest,
+                                    src_nodata=nir_src.nodata,
+                                    dst_nodata=nir_src.nodata,
+                                )
+                                nir_arr = np.ma.masked_where(
+                                    nir_resized == nir_src.nodata, nir_resized
+                                )
+                            else:
+                                # same shape – just mask nodata
+                                nir_arr = np.ma.masked_where(
+                                    nir_arr == nir_src.nodata, nir_arr
+                                )
 
-                # ---- 2) Fallback to orthomosaic NIR band if no per‑plot NIR ----
+                            thr = np.percentile(nir_arr.compressed(), nir_factor)
+                            bg_mask = ~nir_arr.mask & (nir_arr <= thr)
+
+                # ---- 2) Fallback: use NIR band from the same raster ----
                 if bg_mask is None and src.count >= nir_band_index:
                     nir_arr = src.read(nir_band_index, masked=True)
                     thr = np.percentile(nir_arr.compressed(), nir_bg_factor)
                     bg_mask = ~nir_arr.mask & (nir_arr <= thr)
 
-                # ---- 3) Primary vegetation mask ----
+                # ---- 3) Primary vegetation mask --------------------------------
                 if adaptive_method is not None:
                     threshold = _adaptive_threshold(
                         band, method=adaptive_method, percentile=adaptive_percentile
@@ -173,20 +181,20 @@ def generate_masks_vi(
                             band >= lower_threshold & band <= upper_threshold
                         )
 
-                # ---- 4) Dead‑tissue band ----
+                # ---- 4) Dead‑tissue band --------------------------------------
                 if dead_threshold is not None:
                     dead = ~band.mask & (band <= dead_threshold)
                     veg = veg | dead
 
-                # ---- 5) Remove background ----
+                # ---- 5) Remove background --------------------------------------
                 if bg_mask is not None:
                     veg = veg & (~bg_mask)
 
-                # ---- 6) Build binary mask ----
+                # ---- 6) Build binary mask ------------------------------------
                 mask = np.zeros(band.shape, dtype=np.uint8)
                 mask[veg] = 255
 
-                # ---- optional morphology ----
+                # ---- optional morphology ------------------------------------
                 if kernel is not None:
                     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
 
@@ -224,15 +232,17 @@ def generate_masks_for_batch(
         if not os.path.isdir(root):
             continue
 
-        # DEM masks (unchanged naming)
+        # DEM masks -----------------------------------------------------
         dem_img = os.path.join(root, dem_subdir)
         if os.path.isdir(dem_img):
             dem_mask = os.path.join(
-                root, "masks", os.path.basename(dem_subdir).split("_")[0] + "_mask"
+                root,
+                "masks",
+                os.path.basename(dem_subdir).split("_")[0] + "_mask",
             )
             generate_masks_dem(dem_img, dem_mask)
 
-        # VI masks
+        # VI masks -----------------------------------------------------
         vi_img = os.path.join(root, vi_subdir)
         if os.path.isdir(vi_img):
             vi_mask = _determine_mask_dir(root, vi_subdir, mask_prefix)
@@ -254,7 +264,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Generate GeoTIFF masks for VI (optionally adaptive) and DEM."
     )
-    # single‑folder mode
+
+    # ------------------------------------------------------------------
+    # SINGLE‑FOLDER (manual) mode
     parser.add_argument("ipath", nargs="?", help="Path to a single VI/DEM folder.")
     parser.add_argument("mpath", nargs="?", help="Output mask folder (single mode).")
     parser.add_argument(
@@ -295,7 +307,9 @@ if __name__ == "__main__":
         default="chat",
         help="Prefix for mask folders (e.g. chatNDVI_mask).",
     )
-    # batch mode
+
+    # ------------------------------------------------------------------
+    # BATCH mode
     parser.add_argument(
         "--batchpath",
         type=str,
@@ -340,7 +354,7 @@ if __name__ == "__main__":
             nir_folder=args.nir_folder,
         )
     else:
-        # decide if we are in DEM or VI mode
+        # decide mode (DEM or VI) based on folder name
         mode = args.mode
         if not mode:
             mode = "dem" if "dem" in os.path.basename(args.ipath).lower() else "vi"
