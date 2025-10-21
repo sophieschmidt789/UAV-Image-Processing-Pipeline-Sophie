@@ -112,8 +112,9 @@ def generate_masks_vi(
     adaptive_method=None,
     adaptive_percentile=5,
     dead_threshold=None,
+    nir_band_index=5,          # ← add this optional param
+    nir_bg_factor=1.5,         # factor to push the NIR threshold away from zero
 ):
-    """Generate binary masks from a VI band."""
     os.makedirs(mask_folder, exist_ok=True)
 
     kernel = None
@@ -128,36 +129,50 @@ def generate_masks_vi(
         try:
             with rasterio.open(in_fp) as src:
                 band = src.read(band_index, masked=True)
+                # --- 1) Build a background mask with NIR -----------------
+                if nir_band_index is not None:
+                    nir = src.read(nir_band_index, masked=True)
+                    # change “alpha” (nir_bg_factor) to push threshold
+                    # that separates black plastic from anything else.
+                    # The background will be the lower 5 % of the NIR values.
+                    flat = nir.compressed()
+                    nir_thr = np.percentile(flat, nir_bg_factor)   # e.g. 1.5 → 5th‑percentile
+                    bg_mask = ~nir.mask & (nir <= nir_thr)           # True in plastic
+                else:
+                    bg_mask = None
 
-                # ---------- adaptive threshold ----------
+                # --- 2) Build the vegetation mask ----------------------
                 if adaptive_method is not None:
                     thresh = _adaptive_threshold(
                         band,
                         method=adaptive_method,
                         percentile=adaptive_percentile,
                     )
-                    sel = ~band.mask & (band < thresh)
+                    veg = ~band.mask & (band < thresh)
                 else:
                     if lower_threshold is None:
-                        sel = ~band.mask & (band <= upper_threshold)
+                        veg = ~band.mask & (band <= upper_threshold)
                     elif upper_threshold is None:
-                        sel = ~band.mask & (band >= lower_threshold)
+                        veg = ~band.mask & (band >= lower_threshold)
                     else:
-                        sel = ~band.mask & (
+                        veg = ~band.mask & (
                             band >= lower_threshold
                             & band <= upper_threshold
                         )
 
-                # ---------- dead‑tissue band ----------
+                # --- 3) Add the “dead‑tissue” band --------------------
                 if dead_threshold is not None:
-                    sel_dead = ~band.mask & (band <= dead_threshold)
-                    sel = sel | sel_dead
+                    dead = ~band.mask & (band <= dead_threshold)
+                    veg = veg | dead
 
-                # ---------- binary mask ----------
+                # --- 4) Remove background --------------------------------
+                if bg_mask is not None:
+                    veg = veg & (~bg_mask)      # <<< plucked out
+
+                # --- 5) Binary mask & optional closing ------------------
                 mask = np.zeros(band.shape, dtype=np.uint8)
-                mask[sel] = 255
+                mask[veg] = 255
 
-                # ---------- optional closing ----------
                 if kernel is not None:
                     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
 
@@ -165,7 +180,6 @@ def generate_masks_vi(
         except Exception as e:
             print(f"[VI] skip {in_fp}: {e}")
     print(f"[VI] masks saved → {mask_folder}")
-
 
 # ----------------------------------------------------------------------
 def generate_masks_for_batch(
