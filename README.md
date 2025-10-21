@@ -218,8 +218,12 @@ The script thresholds a VI (and/or DEM) to produce a **binary vegetation mask** 
 - Tune `--vi-lt` / `--vi-gt` thresholds depending on the index and your dataset.
 
 ```bash
-# Single OSAVI folder → veg mask (example threshold)
-#python 4_generate_mask_on_1orbatch.py "/data/OSAVI_by_plot" "/data/masks/OSAVI_mask" --lt 0.6
+# Single OSAVI folder → veg mask (example threshold) - just on last date with lots of dead tissue
+#"C:\Program Files\QGIS 3.44.3\bin\python-qgis.bat" sophie_4_generate_mask_on_1orbatch.py "D:\test\20250205_VW_Swb_S1_Neo_20m_\OSAVI_by_plot" "D:\test\20250205_VW_Swb_S1_Neo_20m_\masks\OSAVI_mask" --vi-lt 0.6
+#"C:\Program Files\QGIS 3.44.3\bin\python-qgis.bat" sophie_4_generate_mask_on_1orbatch.py "D:\test\20250205_VW_Swb_S1_Neo_20m_\OSAVI_by_plot" "D:\test\20250205_VW_Swb_S1_Neo_20m_\masks\OSAVI_mask" --vi-lt 0.3
+
+# Single NDVI folder → veg mask (example threshold) - just on last date with lots of dead tissue
+python 4_generate_mask_on_1orbatch.py "D:\test\20250205_VW_Swb_S1_Neo_20m_\NDVI_by_plot" ""D:\test\20250205_VW_Swb_S1_Neo_20m_\masks\NDVI_mask" --lt 0.6
 
 # Single DEM folder → veg mask (height-based, if desired)
 python 4_generate_mask_on_1orbatch.py "/data/dem_by_plot" "/data/masks/dem_mask"
@@ -227,7 +231,19 @@ python 4_generate_mask_on_1orbatch.py "/data/dem_by_plot" "/data/masks/dem_mask"
 # Batch: use OSAVI across date folders (swap OSAVI_by_plot for NDVI_by_plot, HSV_by_plot, etc.)
 #python 4_generate_mask_on_1orbatch.py --batchpath <base_dir> --vi-subdir OSAVI_by_plot --vi-lt 0.6
 #batch for just NDVI_by_plot folders:
-"C:\Program Files\QGIS 3.44.3\bin\python-qgis.bat" sophie_4_generate_mask_on_1orbatch.py --batchpath D:\test --vi-subdir NDVI_by_plot --vi-lt 0.6
+"C:\Program Files\QGIS 3.44.3\bin\python-qgis.bat" sophie_4_generate_mask_on_1orbatch.py --batchpath D:\test --vi-subdir NDVI_by_plot --vi-lt 0.6 #doesn't capture dead tissue
+"C:\Program Files\QGIS 3.44.3\bin\python-qgis.bat" sophie_4_generate_mask_on_1orbatch.py --batchpath D:\test --vi-subdir NDVI_by_plot --vi-lt 0.2 #too high, taking too many pixels
+"C:\Program Files\QGIS 3.44.3\bin\python-qgis.bat" sophie_4_generate_mask_on_1orbatch.py --batchpath D:\test --vi-subdir NDVI_by_plot --vi-lt 0.4 #still not capturing all the dead pixels - esp dark brown long dead
+"C:\Program Files\QGIS 3.44.3\bin\python-qgis.bat" sophie_4_generate_mask_on_1orbatch.py --batchpath D:\test --vi-subdir NDVI_by_plot --vi-lt 0.3 #better
+
+#batch for just OSAVI_by_plot folders:
+"C:\Program Files\QGIS 3.44.3\bin\python-qgis.bat" sophie_4_generate_mask_on_1orbatch.py --batchpath D:\test --vi-subdir OSAVI_by_plot --vi-lt 0.6 #doesn't capture dead tissue
+"C:\Program Files\QGIS 3.44.3\bin\python-qgis.bat" sophie_4_generate_mask_on_1orbatch.py --batchpath D:\test --vi-subdir OSAVI_by_plot --vi-lt 0.2 #way too high, too many pixels
+"C:\Program Files\QGIS 3.44.3\bin\python-qgis.bat" sophie_4_generate_mask_on_1orbatch.py --batchpath D:\test --vi-subdir OSAVI_by_plot --vi-lt 0.4 #still not capturing all dead pixels
+"C:\Program Files\QGIS 3.44.3\bin\python-qgis.bat" sophie_4_generate_mask_on_1orbatch.py --batchpath D:\test --vi-subdir OSAVI_by_plot --vi-lt 0.3 #much better, not perfect. Works well for 20250205 but nort as well for 20241118 where it is picking up too much of the background
+
+#batch for dem_by_plot
+"C:\Program Files\QGIS 3.44.3\bin\python-qgis.bat" sophie_4_generate_mask_on_1orbatch.py --batchpath D:\test --vi-subdir dem_by_plot --vi-lt 0.6
 ```
 
 ![mask_on_spectral_dem](screenshot/5.png)
