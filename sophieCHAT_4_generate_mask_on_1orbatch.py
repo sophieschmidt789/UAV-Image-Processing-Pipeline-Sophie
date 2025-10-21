@@ -2,9 +2,12 @@
 """
 Generate binary masks from a VI or DEM.
 
-The updated code adds a ``--mask-prefix`` argument (default ``chat``).  
-The VI mask folder is then created as <root>/masks/<prefix>_<vi_name>_mask
-(e.g. <root>/masks/chatNDVI_mask).
+Features
+--------
+* NIR‑based background removal (black plastic)
+* Per‑image Otsu / percentile threshold
+* Dead‑tissue band preserved (see --dead-vi)
+* Mask folders named chatNDVI_mask / chatOSAVI_mask
 """
 
 import os
@@ -12,6 +15,7 @@ import argparse
 import numpy as np
 import rasterio
 import ckwrap  # ckmeans
+
 try:
     import cv2  # optional morphology
     _HAS_CV2 = True
@@ -19,6 +23,7 @@ except Exception:
     _HAS_CV2 = False
 
 
+# ----------------------------------------------------------------------
 def _write_mask_like(src, mask_array, out_path, nodata_val=0):
     """Write a 1‑band uint8 mask that preserves the source profile."""
     profile = src.profile.copy()
@@ -33,6 +38,7 @@ def _write_mask_like(src, mask_array, out_path, nodata_val=0):
         dst.write(mask_array.astype(np.uint8), 1)
 
 
+# ----------------------------------------------------------------------
 def generate_masks_dem(image_folder, mask_folder, k=3):
     """Generate masks from a DEM using ckmeans clustering."""
     os.makedirs(mask_folder, exist_ok=True)
@@ -41,18 +47,24 @@ def generate_masks_dem(image_folder, mask_folder, k=3):
             continue
         in_fp = os.path.join(image_folder, fn)
         out_fp = os.path.join(mask_folder, fn)
+
         try:
             with rasterio.open(in_fp) as src:
                 dem = src.read(1, masked=True)
-                dem = np.ma.masked_where((dem == -9999) | dem.mask, dem)
+                dem = np.ma.masked_where(
+                    (dem == -9999) | dem.mask, dem
+                )
+
                 if dem.count() == 0:
                     mask = np.zeros(dem.shape, dtype=np.uint8)
                     _write_mask_like(src, mask, out_fp)
                     continue
+
                 vmin = dem.min()
                 vmax = dem.max()
                 denom = max(1e-12, float(vmax - vmin))
                 scaled = (dem - vmin) / denom * 255.0
+
                 vals = scaled.compressed().astype(np.float32)
                 if vals.size == 0:
                     mask = np.zeros(dem.shape, dtype=np.uint8)
@@ -64,17 +76,21 @@ def generate_masks_dem(image_folder, mask_folder, k=3):
                     mask = np.zeros(dem.shape, dtype=np.uint8)
                     valid = ~scaled.mask
                     mask[valid & (scaled >= thresh)] = 255
+
                 _write_mask_like(src, mask, out_fp)
         except Exception as e:
             print(f"[DEM] skip {in_fp}: {e}")
+
     print(f"[DEM] masks saved → {mask_folder}")
 
 
+# ----------------------------------------------------------------------
 def _adaptive_threshold(mask_arr, method="otsu", percentile=5):
-    """Compute a per‑image threshold."""
+    """Return a per‑image threshold."""
     values = mask_arr.compressed()
     if values.size == 0:
         return np.inf
+
     if method == "otsu":
         norm = 255.0 * (values - values.min()) / (
             values.max() - values.min() + 1e-12
@@ -88,7 +104,11 @@ def _adaptive_threshold(mask_arr, method="otsu", percentile=5):
         thr = np.percentile(values, percentile)
     else:
         raise ValueError("Unsupported adaptive method")
-    return thrdef generate_masks_vi(
+    return thr
+
+
+# ----------------------------------------------------------------------
+def generate_masks_vi(
     image_folder,
     mask_folder,
     lower_threshold=None,
@@ -98,7 +118,7 @@ def _adaptive_threshold(mask_arr, method="otsu", percentile=5):
     adaptive_method=None,
     adaptive_percentile=5,
     dead_threshold=None,
-    nir_band_index=5,          # optional NIR visualisation step
+    nir_band_index=5,
     nir_bg_factor=1.5,
 ):
     """Generate binary masks from a VI band."""
@@ -113,26 +133,27 @@ def _adaptive_threshold(mask_arr, method="otsu", percentile=5):
             continue
         in_fp = os.path.join(image_folder, fn)
         out_fp = os.path.join(mask_folder, fn)
+
         try:
             with rasterio.open(in_fp) as src:
                 band = src.read(band_index, masked=True)
 
-                # Background mask via NIR – removes black plastic
+                # ----- background mask (black plastic) -----
                 bg_mask = None
                 if nir_band_index is not None:
                     nir = src.read(nir_band_index, masked=True)
                     flat = nir.compressed()
-                    nir_thr = np.percentile(flat, nir_bg_factor)  # e.g. 5‑th percentile
+                    nir_thr = np.percentile(flat, nir_bg_factor)
                     bg_mask = ~nir.mask & (nir <= nir_thr)
 
-                # Primary vegetation mask
+                # ----- primary vegetation mask -----
                 if adaptive_method is not None:
-                    thresh = _adaptive_threshold(
+                    thr_val = _adaptive_threshold(
                         band,
                         method=adaptive_method,
                         percentile=adaptive_percentile,
                     )
-                    veg = ~band.mask & (band < thresh)
+                    veg = ~band.mask & (band < thr_val)
                 else:
                     if lower_threshold is None:
                         veg = ~band.mask & (band <= upper_threshold)
@@ -144,12 +165,12 @@ def _adaptive_threshold(mask_arr, method="otsu", percentile=5):
                             & band <= upper_threshold
                         )
 
-                # Dead‑tissue band
+                # ----- dead‑tissue band ----------
                 if dead_threshold is not None:
                     dead = ~band.mask & (band <= dead_threshold)
                     veg = veg | dead
 
-                # Remove background
+                # ----- remove background -------
                 if bg_mask is not None:
                     veg = veg & (~bg_mask)
 
@@ -162,15 +183,20 @@ def _adaptive_threshold(mask_arr, method="otsu", percentile=5):
                 _write_mask_like(src, mask, out_fp)
         except Exception as e:
             print(f"[VI] skip {in_fp}: {e}")
+
     print(f"[VI] masks saved → {mask_folder}")
 
 
+# ----------------------------------------------------------------------
 def _determine_mask_dir(root, vi_subdir, mask_prefix="chat"):
-    """Return the mask folder for a given VI subdir."""
-    vi_name = os.path.basename(vi_subdir).split("_")[0]   # NDVI or OSAVI
+    """
+    Return the directory for the VI mask (e.g. <root>/masks/chatNDVI_mask)
+    """
+    vi_name = os.path.basename(vi_subdir).split("_")[0]  # NDVI or OSAVI
     return os.path.join(root, "masks", f"{mask_prefix}{vi_name}_mask")
 
 
+# ----------------------------------------------------------------------
 def generate_masks_for_batch(
     batch_folder,
     vi_subdir="OSAVI_by_plot",
@@ -189,15 +215,15 @@ def generate_masks_for_batch(
         if not os.path.isdir(root):
             continue
 
-        # DEM masks (unchanged naming convention)
+        # DEM masks (unchanged naming)
         dem_image_folder = os.path.join(root, dem_subdir)
         if os.path.isdir(dem_image_folder):
             dem_mask_folder = os.path.join(
-                root, "masks", os.path.basename(dem_image_folder).split("_")[0] + "_mask"
+                root, "masks", os.path.basename(dem_subdir).split("_")[0] + "_mask"
             )
             generate_masks_dem(dem_image_folder, dem_mask_folder)
 
-        # VI masks – custom prefix
+        # VI masks
         vi_image_folder = os.path.join(root, vi_subdir)
         if os.path.isdir(vi_image_folder):
             vi_mask_folder = _determine_mask_dir(root, vi_subdir, mask_prefix)
@@ -215,37 +241,28 @@ def generate_masks_for_batch(
             )
 
 
+# ----------------------------------------------------------------------
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Generate GeoTIFF masks for VI (flexible) and DEM (ckmeans), preserving CRS."
     )
     parser.add_argument("ipath", nargs="?", help="Path to VI/DEM folder (single mode).")
     parser.add_argument("mpath", nargs="?", help="Output mask folder (single mode).")
-    parser.add_argument("--mode", choices=["vi", "dem"], default=None,
-                        help="Forced mode for single‑folder run.")
+    parser.add_argument("--mode", choices=["vi", "dem"], default=None, help="Forced mode for single‑folder run.")
     parser.add_argument("--lt", type=float, default=None, help="Lower threshold for VI mask.")
     parser.add_argument("--ut", type=float, default=None, help="Upper threshold for VI mask.")
-    parser.add_argument("--morph", type=int, default=5, help="Morph closing kernel.")
+    parser.add_argument("--morph", type=int, default=5, help="Morph closing kernel (pixels). 0=off.")
     parser.add_argument("--band", type=int, default=1, help="Band index to read for VI.")
-    parser.add_argument("--adaptive", type=str, choices=["otsu", "percentile"],
-                        default=None, help="Per‑image adaptive threshold.")
-    parser.add_argument("--adaptive-percentile", type=int, default=5,
-                        help="Percentile if using adaptive percentile.")
-    parser.add_argument("--dead-vi", type=float, default=None,
-                        help="Include VI <= this value as dead tissue.")
+    parser.add_argument("--adaptive", type=str, choices=["otsu", "percentile"], default=None, help="Per‑image adaptive threshold.")
+    parser.add_argument("--adaptive-percentile", type=int, default=5, help="Percentile if using adaptive percentile.")
+    parser.add_argument("--dead-vi", type=float, default=None, help="Include VI <= this value as dead tissue.")
     parser.add_argument("--batchpath", type=str, help="Batch mode: path to many date folders.")
-    parser.add_argument("--vi-subdir", type=str, default="OSAVI_by_plot",
-                        help="Name of VI subfolder to process.")
-    parser.add_argument("--dem-subdir", type=str, default="dem_by_plot",
-                        help="Name of DEM subfolder to process.")
-    parser.add_argument("--vi-lt", type=float, default=None,
-                        help="Lower threshold for batch VI mask.")
-    parser.add_argument("--vi-ut", type=float, default=None,
-                        help="Upper threshold for batch VI mask.")
-    parser.add_argument("--vi-morph", type=int, default=5,
-                        help="Morph closing kernel for batch VI mask.")
-    parser.add_argument("--mask-prefix", type=str, default="chat",
-                        help="Prefix used for the mask folders (e.g. 'chatNDVI_mask').")
+    parser.add_argument("--vi-subdir", type=str, default="OSAVI_by_plot", help="Name of VI subfolder to process.")
+    parser.add_argument("--dem-subdir", type=str, default="dem_by_plot", help="Name of DEM subfolder to process.")
+    parser.add_argument("--vi-lt", type=float, default=None, help="Lower threshold for batch VI mask.")
+    parser.add_argument("--vi-ut", type=float, default=None, help="Upper threshold for batch VI mask.")
+    parser.add_argument("--vi-morph", type=int, default=5, help="Morph closing kernel for batch VI mask.")
+    parser.add_argument("--mask-prefix", type=str, default="chat", help="Prefix used for the mask folders (e.g. 'chatNDVI_mask').")
     args = parser.parse_args()
 
     if args.batchpath:
@@ -266,6 +283,7 @@ if __name__ == "__main__":
         in_lower = os.path.basename(args.ipath).lower()
         if mode is None:
             mode = "dem" if "dem" in in_lower else "vi"
+
         if mode == "dem":
             generate_masks_dem(args.ipath, args.mpath)
         else:
