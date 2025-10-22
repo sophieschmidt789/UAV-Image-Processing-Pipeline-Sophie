@@ -83,12 +83,21 @@ def generate_masks_vi(
     background_image=None,
     ref_offset=0.0,
 ):
-    """Generate plant masks from a single VI band."""
+    """
+    Generate plant masks from a single VI band.
+
+    If a background_image is supplied and its shape does not match the
+    shape of the current tile, the background is resized (nearest‑neighbour)
+    to the tile’s dimensions before the comparison is performed.
+    """
     if lower_threshold is None and upper_threshold is None and background_image is None:
         raise ValueError(
             "Provide at least one of lower_threshold, upper_threshold, or a background image."
         )
+
     os.makedirs(mask_folder, exist_ok=True)
+
+    # optional morphological closing kernel
     kernel = None
     if _HAS_CV2 and morph_close and morph_close > 1:
         kernel = np.ones((morph_close, morph_close), np.uint8)
@@ -96,31 +105,64 @@ def generate_masks_vi(
     for fn in os.listdir(image_folder):
         if not fn.lower().endswith(".tif"):
             continue
+
         in_fp = os.path.join(image_folder, fn)
         out_fp = os.path.join(mask_folder, fn)
+
         try:
             with rasterio.open(in_fp) as src:
-                band = src.read(band_index, masked=True)  # masked array
+                # -----------------------------------------------------------------
+                # 1. read the VI band (masked array)
+                band = src.read(band_index, masked=True)
+
+                # 2. build the basic threshold mask (lower/upper or one‑sided)
                 mask = np.zeros(band.shape, dtype=np.uint8)
                 valid = ~band.mask
+
                 if lower_threshold is None:
                     sel = valid & (band <= upper_threshold)
                 elif upper_threshold is None:
                     sel = valid & (band >= lower_threshold)
                 else:
                     sel = valid & (band >= lower_threshold) & (band <= upper_threshold)
+
+                # -----------------------------------------------------------------
+                # 3. background‑mask handling (new part)
                 if background_image is not None:
-                    # keep pixels that are *not* brighter than the background
-                    bg_sel = band <= (background_image + ref_offset)
-                    sel = sel & bg_sel
+                    # If the background array shape differs from the tile shape,
+                    # resize it to the tile’s dimensions.
+                    if background_image.shape != band.shape:
+                        # -----------------------------------------------------------------
+                        # Resize with OpenCV (fast nearest‑neighbour).  If you prefer
+                        # pure‑numpy you could use scipy.ndimage.zoom; OpenCV is already
+                        # an optional dependency for the morphology step, so it is safe.
+                        # -----------------------------------------------------------------
+                        bg_resized = cv2.resize(
+                            background_image.astype(np.float32),
+                            (band.shape[1], band.shape[0]),   # (width, height)
+                            interpolation=cv2.INTER_NEAREST,
+                        )
+                        bg_arr = bg_resized
+                    else:
+                        bg_arr = background_image
+
+                    # Keep pixels that are NOT brighter than the background (+ offset)
+                    bg_sel = band <= (bg_arr + ref_offset)
+                    sel = sel & bg_sel   # combine with the VI threshold mask
+
+                # -----------------------------------------------------------------
+                # 4. write the final mask
                 mask[sel] = 255
+
                 if kernel is not None:
                     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+
                 _write_mask_like(src, mask, out_fp)
+
         except Exception as e:
             print(f"[VI] skip {in_fp}: {e}")
-    print(f"[VI] masks saved → {mask_folder}")
 
+    print(f"[VI] masks saved → {mask_folder}")
 
 # ----------------------------------------------------------------------
 def _build_background_image(ref_folder, date_subdir, method="max"):
