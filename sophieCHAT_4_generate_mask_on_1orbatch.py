@@ -124,29 +124,80 @@ def generate_masks_vi(
 
 # ----------------------------------------------------------------------
 def _build_background_image(ref_folder, date_subdir, method="max"):
-    """Build a background reference image for a single date folder."""
+    """
+    Build a background reference image for a single date folder.
+    All background rasters are re‑projected on‑the‑fly to the geometry
+    of the first raster encountered, guaranteeing identical shape.
+    """
     date_path = os.path.join(ref_folder, date_subdir)
     if not os.path.isdir(date_path):
         return None
+
+    # collect tif paths
     ref_files = [
-        os.path.join(date_path, fn) for fn in os.listdir(date_path) if fn.lower().endswith(".tif")
+        os.path.join(date_path, fn)
+        for fn in os.listdir(date_path)
+        if fn.lower().endswith('.tif')
     ]
     if not ref_files:
         return None
-    ref_arrays = []
-    for f in ref_files:
-        with rasterio.open(f) as src:
-            ref_arrays.append(src.read(1, masked=True))
-    stacked = np.ma.stack(ref_arrays, axis=0)  # shape (N, H, W)
+
+    # ------------------------------------------------------------------
+    # 1️⃣ read the *first* file – it becomes the master geometry
+    with rasterio.open(ref_files[0]) as master_src:
+        master_arr = master_src.read(1, masked=True)
+        master_shape = master_arr.shape
+        master_transform = master_src.transform
+        master_crs = master_src.crs
+        master_nodata = master_src.nodata
+
+    # ------------------------------------------------------------------
+    # 2️⃣ read every other file and, if needed, re‑project it
+    ref_arrays = [master_arr]                     # first array already matches master
+    for fp in ref_files[1:]:
+        with rasterio.open(fp) as src:
+            arr = src.read(1, masked=True)
+
+            # If shape, transform or CRS differ, re‑project onto master grid
+            if (arr.shape != master_shape
+                or src.transform != master_transform
+                or src.crs != master_crs):
+                # Destination buffer that has the master shape
+                dst = np.zeros(master_shape, dtype=arr.dtype)
+
+                reproject(
+                    source=arr,
+                    destination=dst,
+                    src_transform=src.transform,
+                    src_crs=src.crs,
+                    dst_transform=master_transform,
+                    dst_crs=master_crs,
+                    resampling=Resampling.nearest,
+                    src_nodata=src.nodata,
+                    dst_nodata=master_nodata,
+                )
+                # Convert the re‑projected array back into a masked array
+                arr = np.ma.masked_where(dst == master_nodata, dst)
+
+            ref_arrays.append(arr)
+
+    # ------------------------------------------------------------------
+    # 3️⃣ now all arrays share the same shape → safe to stack
+    stacked = np.ma.stack(ref_arrays, axis=0)   # shape (N, H, W)
+
+    # ------------------------------------------------------------------
+ # 4️⃣ aggregate
     if method == "max":
         buf = stacked.max(axis=0)
     elif method == "mean":
         buf = stacked.mean(axis=0)
     elif method == "median":
-        buf = np.mean(stacked, axis=0)
+        buf = np.ma.median(stacked, axis=0)
     else:
         raise ValueError(f"Unknown aggregation method: {method}")
-    return buf.filled(0.0)  # return float array, mask replaced by 0.0
+
+    # Return a regular (filled) numpy array – the mask routine expects that.
+    return buf.filled(0.0)
 
 
 # ----------------------------------------------------------------------
