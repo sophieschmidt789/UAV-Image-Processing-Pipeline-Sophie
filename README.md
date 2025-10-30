@@ -79,7 +79,7 @@ D:\UAV-Image-Processing-Pipeline-Sophie>"C:\Program Files\Agisoft\Metashape Pro\
 ```bash
 #python rename_ortho_dem.py <base_dir>
 #instead:
-py -3.11 rename_ortho_dem.py D:\test
+py -3.11 rename_ortho_dem.py D:\2024-25_DroneImages\Neo
 ```
 
 ![rename](screenshot/2.png)
@@ -93,7 +93,7 @@ folder-pattern: all subfolders end with "_Swb_Cl"
 ```bash
 #python mv_render_dem_orthos.py <base_dir> --folder-pattern "*_Swb_Cl*" --suffixes dem.tif ortho.tif --dest orthos
 ###instead
-python mv_render_dem_orthos.py D:\test --folder-pattern "*_20m_*" --suffixes dem.tif ortho.tif --dest orthos
+python mv_render_dem_orthos.py D:\2024-25_DroneImages\Neo --folder-pattern "*_20m_*" --suffixes dem.tif ortho.tif --dest orthos
 ```
 
 ![put_in_orthos](screenshot/3.png)
