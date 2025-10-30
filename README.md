@@ -59,11 +59,11 @@ The extracted GSD is then used as the **pixel size** when computing **canopy cov
 
 ```bash
 #metashape.exe -r 0_export_report_metashape.py --batchpath <base_dir>
-####instead, takes about 10 minutes for 12 folders
+####instead, takes about 15 minutes for 12 folders
 D:\UAV-Image-Processing-Pipeline-Sophie>"C:\Program Files\Agisoft\Metashape Pro\metashape.exe" -r sophie_export_report_metashape.py --batchpath D:\2024-25_DroneImages\Neo
 
 #python 0_extract_from_report.py <base_dir>
-####instead
+####instead, 1 min run time
 >py -3.11 0_extract_from_report.py D:\2024-25_DroneImages\Neo
 ```
 
