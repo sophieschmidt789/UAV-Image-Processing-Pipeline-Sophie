@@ -16,9 +16,10 @@ Follow these steps in order.
 ```bash
 # HTTPS
 git clone <REPO_URL_HTTPS>
-
+> D: #call D drive
 cd <REPO_NAME>
 ```
+
 ![clone](screenshot/0.png)
 
 ## Installation
