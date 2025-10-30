@@ -39,7 +39,7 @@ D:\UAV-Image-Processing-Pipeline-Sophie>py -3.11 -m pip install --user -r requir
 
 ### original structure
 ```
-#our base dir is "D:\2024-25_DroneImages\Neo\"
+#our base dir is "D:\2024-25_DroneImages\Neo\" 
 <base_dir>/
 ├─ DATE1
 │  │  ├─ ortho_dem_process.psx
@@ -60,11 +60,11 @@ The extracted GSD is then used as the **pixel size** when computing **canopy cov
 ```bash
 #metashape.exe -r 0_export_report_metashape.py --batchpath <base_dir>
 ####instead
->"C:\Program Files\Agisoft\Metashape Pro\metashape.exe" -r sophie_export_report_metashape.py --batchpath D:\test
+D:\UAV-Image-Processing-Pipeline-Sophie>"C:\Program Files\Agisoft\Metashape Pro\metashape.exe" -r sophie_export_report_metashape.py --batchpath D:\2024-25_DroneImages\Neo
 
 #python 0_extract_from_report.py <base_dir>
 ####instead
->py -3.11 0_extract_from_report.py D:\test
+>py -3.11 0_extract_from_report.py D:\2024-25_DroneImages\Neo
 ```
 
 ![gsd](screenshot/1.png)
