@@ -98,7 +98,7 @@ if __name__ == "__main__":
  #   ap.add_argument("-shp", "--shapeFile", required=True,
  #                   help="Source shapefile")
  #   ap.add_argument("-tpath", "--targetPath", required=True,
-                    help="Target path")
+ #                   help="Target path")
 
 #    args = ap.parse_args()
  #   src_geoTiff = args.geoTiff
