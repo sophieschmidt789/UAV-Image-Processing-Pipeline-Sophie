@@ -3,8 +3,8 @@
 Created on Jan 8, 2019
 
 updated on May 2, 2024 K.
-
 updated on May 9, 2024 K.
+modified on Oct 31, 2025 to ignore .dem files
 
 @author: xuwang
 '''
@@ -35,7 +35,12 @@ def crop_from_orthomosaic(src_geoTiff, shape_file, target_path):
             out_image, out_transform = mask(src, [geoms[i]], crop=True)
 
         out_meta = src.meta.copy()
-        out_meta.update({"driver": "GTiff", "height": out_image.shape[1], "width": out_image.shape[2], "transform": out_transform})
+        out_meta.update({
+            "driver": "GTiff",
+            "height": out_image.shape[1],
+            "width": out_image.shape[2],
+            "transform": out_transform
+        })
         
         #tif_basename = os.path.splitext(os.path.basename(src_geoTiff))[0].split('_')[-1]
         #target_folder = os.path.join(target_path, tif_basename + "_by_plot")
@@ -69,11 +74,44 @@ if __name__ == "__main__":
 
     if os.path.isdir(src_geoTiff):
         for file in os.listdir(src_geoTiff):
-            if file.endswith(".tif"):
+            # Only process .tif files, skipping DEMs
+            if file.endswith(".tif") and not file.lower().endswith(".dem.tif"):
+                print(f"Processing: {file}")
                 crop_from_orthomosaic(os.path.join(src_geoTiff, file), plot_shape, target_path)
-                if not file.endswith(('ortho.tif', 'render.tif', 'dem.tif')):
-                    os.remove(os.path.join(src_geoTiff, file))
+            else:
+                print(f"Skipping: {file}")
     else:
-        crop_from_orthomosaic(src_geoTiff, plot_shape, target_path)
-        if not file.endswith(('ortho.tif', 'render.tif', 'dem.tif')):
-            os.remove(os.path.join(src_geoTiff, file))
+        if not src_geoTiff.lower().endswith(".dem.tif"):
+            print(f"Processing single file: {os.path.basename(src_geoTiff)}")
+            crop_from_orthomosaic(src_geoTiff, plot_shape, target_path)
+        else:
+            print(f"Skipping DEM file: {src_geoTiff}")
+
+
+                     
+            
+            #SCRIPT TO INCLUDE .dem if needed
+#if __name__ == "__main__":
+ #   ap = argparse.ArgumentParser()
+ #   ap.add_argument("-sgt", "--geoTiff", required=True,
+ #                   help="Source GeoTiff image or folder containing GeoTiff images")
+ #   ap.add_argument("-shp", "--shapeFile", required=True,
+ #                   help="Source shapefile")
+ #   ap.add_argument("-tpath", "--targetPath", required=True,
+                    help="Target path")
+
+#    args = ap.parse_args()
+ #   src_geoTiff = args.geoTiff
+ #   plot_shape = args.shapeFile
+#    target_path = args.targetPath
+
+#    if os.path.isdir(src_geoTiff):
+#        for file in os.listdir(src_geoTiff):
+ #           if file.endswith(".tif"):
+  #              crop_from_orthomosaic(os.path.join(src_geoTiff, file), plot_shape, target_path)
+  #              if not file.endswith(('ortho.tif', 'render.tif', 'dem.tif')):
+  #                  os.remove(os.path.join(src_geoTiff, file))
+#    else:
+   #     crop_from_orthomosaic(src_geoTiff, plot_shape, target_path)
+   #     if not file.endswith(('ortho.tif', 'render.tif', 'dem.tif')):
+    #        os.remove(os.path.join(src_geoTiff, file))
