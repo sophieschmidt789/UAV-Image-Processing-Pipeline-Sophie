@@ -35,8 +35,15 @@ def crop_from_orthomosaic(src_geoTiff, shape_file, target_path):
         out_meta = src.meta.copy()
         out_meta.update({"driver": "GTiff", "height": out_image.shape[1], "width": out_image.shape[2], "transform": out_transform})
         
+        #tif_basename = os.path.splitext(os.path.basename(src_geoTiff))[0].split('_')[-1]
+        #target_folder = os.path.join(target_path, tif_basename + "_by_plot")
+       
         tif_basename = os.path.splitext(os.path.basename(src_geoTiff))[0].split('_')[-1]
-        target_folder = os.path.join(target_path, tif_basename + "_by_plot")
+        shp_name = os.path.splitext(os.path.basename(shape_file))[0]
+        shp_suffix = shp_name[-6:]  
+
+        folder_name = f"{tif_basename}_{shp_suffix}_by_plot"
+        target_folder = os.path.join(target_path, folder_name)
 
         if not os.path.exists(target_folder):
             os.makedirs(target_folder)
