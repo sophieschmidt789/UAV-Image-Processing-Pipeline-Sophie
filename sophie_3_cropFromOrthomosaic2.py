@@ -76,7 +76,7 @@ if __name__ == "__main__":
         for file in os.listdir(src_geoTiff):
             file_lower = file.lower()
             # Process only GeoTIFFs that are not DEMs or aux files
-            if file_lower.endswith(".tif") and "dem" not in file_lower:
+            if file_lower.endswith(".tif") and "dem" not in file_lower and "render" not in file_lower:
                 print(f"Processing: {file}")
                 crop_from_orthomosaic(os.path.join(src_geoTiff, file), plot_shape, target_path)
             else:
