@@ -74,18 +74,20 @@ if __name__ == "__main__":
 
     if os.path.isdir(src_geoTiff):
         for file in os.listdir(src_geoTiff):
-            # Only process .tif files, skipping DEMs
-            if file.endswith(".tif") and not file.lower().endswith(".dem.tif"):
+            file_lower = file.lower()
+            # Process only GeoTIFFs that are not DEMs or aux files
+            if file_lower.endswith(".tif") and "dem" not in file_lower:
                 print(f"Processing: {file}")
                 crop_from_orthomosaic(os.path.join(src_geoTiff, file), plot_shape, target_path)
             else:
                 print(f"Skipping: {file}")
     else:
-        if not src_geoTiff.lower().endswith(".dem.tif"):
+        src_lower = src_geoTiff.lower()
+        if src_lower.endswith(".tif") and "dem" not in src_lower:
             print(f"Processing single file: {os.path.basename(src_geoTiff)}")
             crop_from_orthomosaic(src_geoTiff, plot_shape, target_path)
         else:
-            print(f"Skipping DEM file: {src_geoTiff}")
+            print(f"Skipping DEM or non-TIFF file: {src_geoTiff}")
 
 
                      
