@@ -140,7 +140,7 @@ Use a polygon (or circle) layer that outlines **one plot/plant per feature**—a
 ```bash
 # pyqgis
 #python 1_call_rasterRenderRGB.py <base_dir> --folder-pattern "*_Swb_Cl*"
-#instead
+#instead, about 30 minutes for 12 folders
 python sophie_1_callrasterRenderRGB.py D:\2024-25_DroneImages\Neo\ --folder-pattern "_20m_"
 
 #python 2_call_multiOmRasterCalculation4.py <base_dir> --folder-pattern "*_Swb_Cl*" THIS IS IN R NOW
