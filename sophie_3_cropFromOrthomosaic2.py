@@ -25,8 +25,10 @@ def crop_from_orthomosaic(src_geoTiff, shape_file, target_path):
 
     for i in range(len(plotIDs)):
         plot_props = plotIDs[i]                  # this is the properties dictionary for feature i
-        plotID = plot_props['"PlotID"']          # access the PlotID field (with quotes if Fiona has them)
-        plotIDUpdated = plotID.replace('"', '').replace("'", "")
+        #plotID = plot_props['"PlotID"']          # access the PlotID field (with quotes if Fiona has them)
+        plotID = plot_props['PlotID']
+        #plotIDUpdated = plotID.replace('"', '').replace("'", "")
+        plotIDUpdated = str(plotID)
         print(f"Feature {i+1} PlotID: {plotIDUpdated}")
 
         with rasterio.open(src_geoTiff) as src:
