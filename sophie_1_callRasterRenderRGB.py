@@ -4,7 +4,7 @@ import argparse
 
 def main(base_dir: str, folder_pattern: str, suffix: str):
     # Path to QGIS Python launcher
-    qgis_python = r"C:\Program Files\QGIS 3.44.3\bin\python-qgis.bat"
+    qgis_python = r"C:\Program Files\QGIS 3.44.4\bin\python-qgis.bat"
     
     # Full path to raster render script
     script_path = os.path.join(os.path.dirname(__file__), "1_rasterRenderRGB.py")
